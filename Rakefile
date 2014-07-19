@@ -8,10 +8,10 @@ require ::File.expand_path('../config/environment', __FILE__)
 require 'active_support/core_ext'
 
 namespace :generate do
-  desc "Create an empty model in app/models, e.g., rake generate:model NAME=User"
+  desc "Create an empty model in app/models, e.g., rake generate:model NAME=appname"
   task :model do
     unless ENV.has_key?('NAME')
-      raise "Must specificy model name, e.g., rake generate:model NAME=User"
+      raise "Must specificy model name, e.g., rake generate:model NAME=appname"
     end
 
     model_name     = ENV['NAME'].camelize
@@ -31,7 +31,31 @@ namespace :generate do
       EOF
     end
   end
+#Controllers
+  desc "Create an empty controller in app/controllers, e.g., rake generate:controller NAME=appname"
+    task :controller do
+      unless ENV.has_key?('NAME')
+        raise "Must specificy controller name, e.g., rake generate:controller NAME=appname"
+      end
 
+      controller_name     = (ENV['NAME'] + 's_controller').camelize
+      controller_filename = ENV['NAME'].underscore + '.rb'
+      controller_path = APP_ROOT.join('app', 'controllers', controller_filename)
+
+      if File.exist?(controller_path)
+        raise "ERROR: controller file '#{controller_path}' already exists"
+      end
+
+      puts "Creating #{controller_path}"
+      File.open(controller_path, 'w+') do |f|
+        f.write(<<-EOF.strip_heredoc)
+          class #{controller_name} < ActiveRecord::Base
+            # Remember to create a migration!
+          end
+        EOF
+      end
+    end
+#Migration
   desc "Create an empty migration in db/migrate, e.g., rake generate:migration NAME=create_tasks"
   task :migration do
     unless ENV.has_key?('NAME')
@@ -57,10 +81,10 @@ namespace :generate do
     end
   end
 
-  desc "Create an empty model spec in spec, e.g., rake generate:spec NAME=user"
+  desc "Create an empty model spec in spec, e.g., rake generate:spec NAME=appname"
   task :spec do
     unless ENV.has_key?('NAME')
-      raise "Must specificy migration name, e.g., rake generate:spec NAME=user"
+      raise "Must specificy migration name, e.g., rake generate:spec NAME=appname"
     end
 
     name     = ENV['NAME'].camelize
