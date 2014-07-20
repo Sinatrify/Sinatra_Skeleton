@@ -1,4 +1,4 @@
-aint-she-sweet
+Sinatra Skeleton
 ==============
 
-Sinatra skeleton and scaffold generator 
+Sinatra skeleton and scaffold generator
