@@ -50,35 +50,72 @@ task :controller do
   File.open(controller_path, 'w+') do |f|
     f.write(<<-EOF.strip_heredoc)
     get '/' do
-      "Hello world"
-      erb:"index"
+      @var = Var.all
+      erb :index
+    end
+
+    get '/new' do
+      erb :new
+    end
+
+    post '/new' do
+      VAR.create(params)
+      redirect to('/')
+    end
+
+    get '/show/:id' do
+      var = VAR.find(params[:id])
     end
     EOF
   end
 end
-#VIEW
+#VIEWS
 desc "Create an empty view in app/views, e.g., rake generate:view NAME=appname"
-task :view do
+task :views do
   unless ENV.has_key?('NAME')
     raise "Must specificy view name, e.g., rake generate:view NAME=appname"
   end
   name = ENV['NAME']
   view_name     = (name).camelize
   view_filename = name.underscore + '.erb'
-  view_path = APP_ROOT.join('app', 'views', "#{name}", view_filename)
+  view_path = APP_ROOT.join('app', 'views')
 
   if File.exist?(view_path)
     raise "ERROR: view file '#{view_path}' already exists"
   end
 
   puts "Creating #{view_path}"
-  `mkdir app/views/#{name}`
-  File.open(view_path, 'w+') do |f|
-    f.write(<<-EOF.strip_heredoc)
-    <h1>#{view_name}</h1>
-    EOF
+  `mkdir app/views`
+  index = "index.erb"
+  create = "new.erb"
+  show = "show.erb"
+  `touch app/views/index.erb app/views/new.erb app/views/show.erb`
+  arr = [index, create, show]
+  arr.each do |path|
+    File.open(view_path + path, 'w+') do |f|
+      if path == index
+        f.write(<<-EOF.strip_heredoc)
+        <% @students.each do |student| %>
+          <%= student.name %>
+          <% end %>
+          EOF
+        elsif path == create
+          f.write(<<-EOF.strip_heredoc)
+          <form action='' method='post'>
+          <input>
+          <input>
+          </form>
+          EOF
+        else
+          f.write(<<-EOF.strip_heredoc)
+          <h1>SHOW</h1>
+          EOF
+        end
+      end
+    end
   end
-end
+
+
 #Migration
 desc "Create an empty migration in db/migrate, e.g., rake generate:migration NAME=create_tasks"
 task :migration do
@@ -87,7 +124,7 @@ task :migration do
   end
 
   name     = ENV['NAME'].camelize
-  filename = "%s_%s.rb" % [Time.now.strftime('%Y%m%d%H%M%S'), ENV['NAME'].underscore]
+  filename = "%s_create_%s.rb" % [Time.now.strftime('%Y%m%d%H%M%S'), ENV['NAME'].underscore]
   path     = APP_ROOT.join('db', 'migrate', filename)
 
   if File.exist?(path)
@@ -97,12 +134,18 @@ task :migration do
   puts "Creating #{path}"
   File.open(path, 'w+') do |f|
     f.write(<<-EOF.strip_heredoc)
-    class #{name} < ActiveRecord::Migration
+    class Create#{name} < ActiveRecord::Migration
       def change
+        create_table :#{name.downcase}s do |t|
+        t.string :name
+        t.string :body
+
+        t.timestamps
       end
     end
-    EOF
   end
+  EOF
+end
 end
 
 desc "Create an empty model spec in spec, e.g., rake generate:spec NAME=appname"
